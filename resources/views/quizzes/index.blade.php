@@ -1,3 +1,5 @@
+@extends('layouts.app')
+
 @section('title', 'Lista Dostępnych Quizów')
 
 @section('content')
