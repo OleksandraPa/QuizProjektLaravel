@@ -7,3 +7,4 @@ use App\Http\Controllers\QuizController;
 Route::get('/', function () {
     return view('home'); 
 })->name('home');
+
