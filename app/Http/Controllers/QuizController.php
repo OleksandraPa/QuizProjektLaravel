@@ -114,4 +114,37 @@ class QuizController extends Controller
         ]);
     }
     
+    //sprawdzanie poprawnej odpowiedzi
+    public function submitAnswer(Request $request, $quizId, $questionId)
+    {
+        // walidacja danych (A, B, C lub D)
+        $request->validate([
+            'answer' => 'required|in:A,B,C,D',
+        ], [
+            'answer.required' => 'Proszę wybrać jedną opcję, aby sprawdzić odpowiedź.',
+            'answer.in' => 'Wybrana opcja jest nieprawidłowa.'
+        ]);
+
+        // poprawną odpowiedź (A, B, C lub D)
+        if (!isset($this->quizzes[$quizId]) || !isset($this->quizzes[$quizId]['questions'][$questionId])) {
+            return redirect()->route('quizzes.index')->with('error', 'Quiz lub pytanie nie istnieje.');
+        }
+
+        $correctAnswer = $this->quizzes[$quizId]['questions'][$questionId]['answer'];
+        $userAnswer = $request->input('answer');
+        
+        // sprawdzanie poprawności
+        $isCorrect = ($userAnswer === $correctAnswer);
+
+        // wiadomość flash
+        $message = $isCorrect 
+            ? 'Brawo! Twoja odpowiedź jest poprawna.' 
+            : "Niestety, odpowiedź jest niepoprawna. Poprawna opcja to: **{$correctAnswer}**.";
+
+        // przekierowanie na to samo pytanie
+        return redirect()->route('quizzes.question', [
+            'quizId' => $quizId, 
+            'questionId' => $questionId
+        ])->with('status', $message);
+    }
 }
