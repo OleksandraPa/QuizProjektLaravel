@@ -114,6 +114,7 @@ class QuizController extends Controller
         ]);
     }
     
+    
     //sprawdzanie poprawnej odpowiedzi
     public function submitAnswer(Request $request, $quizId, $questionId)
     {

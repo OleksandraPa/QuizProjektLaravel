@@ -3,7 +3,7 @@
 @section('title', 'Strona Główna')
 
 @section('content')
-    <h1 style="margin-top: 30px;">Witamy na Stronie Głównej QuizProject!</h1>
+    <h1 style="margin-top: 30px;">Witamy na Stronie Głównej Quizzes!</h1>
     
     <p style="font-size: 1.1em;">
         Dziękujemy za odwiedzenie naszej platformy do testowania wiedzy.
