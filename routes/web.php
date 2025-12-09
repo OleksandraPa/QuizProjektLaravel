@@ -8,3 +8,9 @@ Route::get('/', function () {
     return view('home'); 
 })->name('home');
 
+// grupa tras dla quizów
+Route::prefix('quizzes')->group(function () {
+    // Lista quizów
+    Route::get('/', [QuizController::class, 'index'])->name('quizzes.index');
+
+});
