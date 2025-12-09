@@ -78,6 +78,40 @@ class QuizController extends Controller
         return view('quizzes.index', ['quizzes' => $this->quizzes]);
     }
 
+    //szczegóły pojedynczego quizu
+    public function show($id)
+    {
+        if (!isset($this->quizzes[$id])) {
+            abort(404);
+        }
+        $quiz = $this->quizzes[$id];
+        $quiz['id'] = $id; 
+
+        return view('quizzes.show', ['quiz' => $quiz]);
+    }
+
     
+    //pojedyncze pytanie
+    public function question($quizId, $questionId)
+    {
+        if (!isset($this->quizzes[$quizId]) || !isset($this->quizzes[$quizId]['questions'][$questionId])) {
+            abort(404);
+        }
+
+        $quiz = $this->quizzes[$quizId];
+        $question = $quiz['questions'][$questionId];
+
+        // całkowita liczbę pytań dla postępu
+        $totalQuestions = count($quiz['questions']);
+
+        return view('quizzes.question', [
+            'quizTitle' => $quiz['title'],
+            'quizId' => $quizId,
+            'questionId' => $questionId,
+            'questionText' => $question['text'],
+            'options' => $question['options'],
+            'totalQuestions' => $totalQuestions 
+        ]);
+    }
     
 }
