@@ -3,146 +3,90 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Quiz;      // Importujemy model Quiz
+use App\Models\Question;  // Importujemy model Question
 
 class QuizController extends Controller
 {
-    //dane z opcjami wyboru
-    private $quizzes = [
-        1 => [
-            'title' => 'Quiz Matematyczny: Podstawowe Działania',
-            'description' => 'Test wiedzy z dodawania, odejmowania i mnożenia w formie testu.',
-            'questions' => [
-                1 => [
-                    'text' => 'Ile to jest 7 + 15?', 
-                    'options' => [
-                        'A' => '21',
-                        'B' => '22',
-                        'C' => '23',
-                        'D' => '24',
-                    ],
-                    'answer' => 'B' 
-                ],
-                2 => [
-                    'text' => 'Jaki jest wynik działania 8 × 6?', 
-                    'options' => [
-                        'A' => '42',
-                        'B' => '48',
-                        'C' => '54',
-                        'D' => '60',
-                    ],
-                    'answer' => 'B' 
-                ],
-                3 => [
-                    'text' => 'Ile wynosi pierwiastek kwadratowy z 49?', 
-                    'options' => [
-                        'A' => '6',
-                        'B' => '7',
-                        'C' => '8',
-                        'D' => '9',
-                    ],
-                    'answer' => 'B' 
-                ],
-            ]
-        ],
-        2 => [
-            'title' => 'Tłumaczenie z angielskiego na polski: Zwierzęta',
-            'description' => 'Wybierz polski odpowiednik popularnych zwierząt.',
-            'questions' => [
-                1 => [
-                    'text' => 'Jakie polskie słowo oznacza "Dog"?', 
-                    'options' => [
-                        'A' => 'Koń',
-                        'B' => 'Pies',
-                        'C' => 'Krowa',
-                        'D' => 'Królik',
-                    ],
-                    'answer' => 'B'
-                ],
-                2 => [
-                    'text' => 'Jakie polskie słowo oznacza "Elephant"?', 
-                    'options' => [
-                        'A' => 'Żyrafa',
-                        'B' => 'Lew',
-                        'C' => 'Słoń',
-                        'D' => 'Nosorożec',
-                    ],
-                    'answer' => 'C'
-                ],
-            ]
-        ]
-    ];
+    // Usunęliśmy tablicę $this->quizzes, dane są teraz w bazie!
 
-    //lista quizow
+    /**
+     * Wyświetla listę wszystkich quizów.
+     */
     public function index()
     {
-        return view('quizzes.index', ['quizzes' => $this->quizzes]);
+        // Pobieramy wszystkie quizy z bazy danych
+        $quizzes = Quiz::all(); 
+
+        return view('quizzes.index', ['quizzes' => $quizzes]);
     }
 
-    //szczegóły pojedynczego quizu
+    /**
+     * Wyświetla szczegóły pojedynczego quizu.
+     */
     public function show($id)
     {
-        if (!isset($this->quizzes[$id])) {
-            abort(404);
-        }
-        $quiz = $this->quizzes[$id];
-        $quiz['id'] = $id; 
+        // Znajdujemy quiz po ID lub zwracamy 404
+        $quiz = Quiz::findOrFail($id); 
+        
+        // Ładujemy pytania powiązane z tym quizem (lazy loading)
+        $questions = $quiz->questions;
 
-        return view('quizzes.show', ['quiz' => $quiz]);
+        return view('quizzes.show', [
+            'quiz' => $quiz,
+            'questions' => $questions
+        ]);
     }
 
-    
-    //pojedyncze pytanie
+    /**
+     * Wyświetla pojedyncze pytanie z quizu.
+     */
     public function question($quizId, $questionId)
     {
-        if (!isset($this->quizzes[$quizId]) || !isset($this->quizzes[$quizId]['questions'][$questionId])) {
-            abort(404);
-        }
+        $question = Question::where('quiz_id', $quizId)
+                            ->where('id', $questionId)
+                            ->firstOrFail(); 
 
-        $quiz = $this->quizzes[$quizId];
-        $question = $quiz['questions'][$questionId];
+        $quiz = Quiz::findOrFail($quizId);
 
-        // całkowita liczbę pytań dla postępu
-        $totalQuestions = count($quiz['questions']);
+        $totalQuestions = $quiz->questions()->count(); 
 
         return view('quizzes.question', [
-            'quizTitle' => $quiz['title'],
+            'quizTitle' => $quiz->title, 
             'quizId' => $quizId,
-            'questionId' => $questionId,
-            'questionText' => $question['text'],
-            'options' => $question['options'],
+            'questionId' => $question->id, 
+            'questionText' => $question->text,
+            'options' => $question->options, 
             'totalQuestions' => $totalQuestions 
         ]);
     }
     
-    
-    //sprawdzanie poprawnej odpowiedzi
+    /**
+     * Obsługuje przesłaną odpowiedź na pytanie i sprawdza jej poprawność.
+     */
     public function submitAnswer(Request $request, $quizId, $questionId)
     {
-        // walidacja danych (A, B, C lub D)
         $request->validate([
             'answer' => 'required|in:A,B,C,D',
         ], [
             'answer.required' => 'Proszę wybrać jedną opcję, aby sprawdzić odpowiedź.',
-            'answer.in' => 'Wybrana opcja jest nieprawidłowa.'
         ]);
 
-        // poprawną odpowiedź (A, B, C lub D)
-        if (!isset($this->quizzes[$quizId]) || !isset($this->quizzes[$quizId]['questions'][$questionId])) {
-            return redirect()->route('quizzes.index')->with('error', 'Quiz lub pytanie nie istnieje.');
+        $question = Question::findOrFail($questionId);
+        
+        if ((int)$question->quiz_id !== (int)$quizId) {
+            abort(403, 'Pytanie nie należy do tego quizu.');
         }
 
-        $correctAnswer = $this->quizzes[$quizId]['questions'][$questionId]['answer'];
+        $correctAnswer = $question->answer; 
         $userAnswer = $request->input('answer');
         
-        // sprawdzanie poprawności
         $isCorrect = ($userAnswer === $correctAnswer);
 
-        // wiadomość flash
         $message = $isCorrect 
             ? 'Brawo! Twoja odpowiedź jest poprawna.' 
-            : "Niestety, odpowiedź jest niepoprawna. Poprawna opcja to: **{$correctAnswer}**.";
+            : "Niestety, odpowiedź jest niepoprawna. Poprawna opcja to: {$correctAnswer}.";
 
-        // przekierowanie na to samo pytanie
         return redirect()->route('quizzes.question', [
             'quizId' => $quizId, 
             'questionId' => $questionId
