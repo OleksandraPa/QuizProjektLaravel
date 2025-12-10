@@ -55,8 +55,8 @@
     </style>
 
     <h2 style="color: #3498db;">{{ $quizTitle }}</h2>
-    <h3 style="margin-bottom: 30px;">Pytanie {{ $questionId }} z {{ $totalQuestions }}</h3>
-    
+    <h3 style="margin-bottom: 30px;">Pytanie {{ $questionNumber }} z {{ $totalQuestions }}</h3>
+
     @if (session('status'))
         <div class="alert {{ str_contains(session('status'), 'Brawo') ? 'alert-success' : 'alert-danger' }}">
             {{ session('status') }}
@@ -64,7 +64,7 @@
     @endif
     @if ($errors->any())
         <div class="alert alert-danger">
-            **Błąd:** {{ $errors->first('answer') }}
+            Błąd: {{ $errors->first('answer') }}
         </div>
     @endif
     

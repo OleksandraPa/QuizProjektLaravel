@@ -3,19 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Quiz;      // Importujemy model Quiz
-use App\Models\Question;  // Importujemy model Question
+use App\Models\Quiz;      
+use App\Models\Question;  
 
 class QuizController extends Controller
 {
-    // Usunęliśmy tablicę $this->quizzes, dane są teraz w bazie!
-
     /**
      * Wyświetla listę wszystkich quizów.
      */
     public function index()
     {
-        // Pobieramy wszystkie quizy z bazy danych
         $quizzes = Quiz::all(); 
 
         return view('quizzes.index', ['quizzes' => $quizzes]);
@@ -26,10 +23,8 @@ class QuizController extends Controller
      */
     public function show($id)
     {
-        // Znajdujemy quiz po ID lub zwracamy 404
         $quiz = Quiz::findOrFail($id); 
-        
-        // Ładujemy pytania powiązane z tym quizem (lazy loading)
+
         $questions = $quiz->questions;
 
         return view('quizzes.show', [
@@ -39,32 +34,31 @@ class QuizController extends Controller
     }
 
     /**
-     * Wyświetla pojedyncze pytanie z quizu.
+     * pojedyncze pytanie z quizu
      */
-    public function question($quizId, $questionId)
-    {
+    public function question($quizId, $questionId, $questionNumber = 1)    {
         $question = Question::where('quiz_id', $quizId)
                             ->where('id', $questionId)
                             ->firstOrFail(); 
 
         $quiz = Quiz::findOrFail($quizId);
 
-        $totalQuestions = $quiz->questions()->count(); 
-
+        $totalQuestions = $quiz->questions()->count();
         return view('quizzes.question', [
             'quizTitle' => $quiz->title, 
             'quizId' => $quizId,
             'questionId' => $question->id, 
             'questionText' => $question->text,
             'options' => $question->options, 
-            'totalQuestions' => $totalQuestions 
+            'totalQuestions' => $totalQuestions,
+            'questionNumber' => (int)$questionNumber 
         ]);
     }
     
     /**
      * Obsługuje przesłaną odpowiedź na pytanie i sprawdza jej poprawność.
      */
-    public function submitAnswer(Request $request, $quizId, $questionId)
+    public function submitAnswer(Request $request, $quizId, $questionId, $questionNumber = 1) // Dodajemy questionNumber    
     {
         $request->validate([
             'answer' => 'required|in:A,B,C,D',
@@ -80,7 +74,7 @@ class QuizController extends Controller
 
         $correctAnswer = $question->answer; 
         $userAnswer = $request->input('answer');
-        
+
         $isCorrect = ($userAnswer === $correctAnswer);
 
         $message = $isCorrect 
@@ -89,7 +83,8 @@ class QuizController extends Controller
 
         return redirect()->route('quizzes.question', [
             'quizId' => $quizId, 
-            'questionId' => $questionId
+            'questionId' => $questionId,
+            'questionNumber' => $questionNumber
         ])->with('status', $message);
     }
 }

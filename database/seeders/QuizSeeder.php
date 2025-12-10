@@ -15,8 +15,8 @@ class QuizSeeder extends Seeder
     {
         $quizzesData = [
             [
-                'title' => 'Quiz Matematyczny: Podstawowe Działania (Wybór)',
-                'description' => 'Test wiedzy z dodawania, odejmowania i mnożenia w formie testu.',
+                'title' => 'Quiz Matematyczny: Podstawowe Działania',
+                'description' => 'Test wiedzy z dodawania i mnożenia w formie testu.',
                 'questions' => [
                     [
                         'text' => 'Ile to jest 7 + 15?',
@@ -36,16 +36,16 @@ class QuizSeeder extends Seeder
                 ]
             ],
             [
-                'title' => 'Angielski/Polski: Zwierzęta (Wybór)',
+                'title' => 'Tłumaczenie z angielskiego na polski (zwierzęta)',
                 'description' => 'Wybierz polski odpowiednik popularnych zwierząt.',
                 'questions' => [
                     [
-                        'text' => 'Jakie polskie słowo oznacza **Dog**?',
+                        'text' => 'Jakie polskie słowo oznacza "Dog"?',
                         'options' => ['A' => 'Koń', 'B' => 'Pies', 'C' => 'Krowa', 'D' => 'Królik'],
                         'answer' => 'B'
                     ],
                     [
-                        'text' => 'Jakie polskie słowo oznacza **Elephant**?',
+                        'text' => 'Jakie polskie słowo oznacza "Elephant"?',
                         'options' => ['A' => 'Żyrafa', 'B' => 'Lew', 'C' => 'Słoń', 'D' => 'Nosorożec'],
                         'answer' => 'C'
                     ],

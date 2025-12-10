@@ -17,9 +17,7 @@ Route::prefix('quizzes')->group(function () {
     Route::get('/{id}', [QuizController::class, 'show'])->name('quizzes.show');
 
     // Pojedyncze pytanie (GET: wyświetlenie)
-    Route::get('/{quizId}/question/{questionId}', [QuizController::class, 'question'])->name('quizzes.question');
-
+    Route::get('/{quizId}/question/{questionId}/{questionNumber?}', [QuizController::class, 'question'])->name('quizzes.question');
     // Przesłanie odpowiedzi (POST: sprawdzenie)
-    Route::post('/{quizId}/question/{questionId}', [QuizController::class, 'submitAnswer'])->name('quizzes.submit');
-    
+    Route::post('/{quizId}/question/{questionId}/{questionNumber?}', [QuizController::class, 'submitAnswer'])->name('quizzes.submit');    
 });
