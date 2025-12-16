@@ -1,82 +1,131 @@
 @extends('layouts.app')
 
-@section('title', "Pytanie $questionNumber z $totalQuestions") 
+@section('title', "Pytanie $questionNumber z $totalQuestions")
 
 @section('content')
 <style>
-.option-label {
-    display: block;
-    margin-bottom: 15px;
-    font-size: 1.2em;
-    cursor: pointer;
-    padding: 15px 20px;
-    background-color: #f1f1f1;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    transition: background-color 0.2s, border-color 0.2s;
-    text-align: left;
-}
-.option-label:hover {
-    background-color: #e9ecef;
-    border-color: #3498db; 
-}
-.option-label input[type="radio"] {
-    margin-right: 15px;
-    transform: scale(1.5); 
-    vertical-align: middle;
-}
-.submit-button, .next-button {
-    padding: 15px 30px;
-    background-color: #3498db; 
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: bold;
-    transition: background-color 0.2s;
-    margin-right: 15px;
-}
-.submit-button:hover, .next-button:hover {
-    background-color: #2980b9;
-}
-.status-message {
-    padding: 10px 15px;
-    background-color: #d1e7dd;
-    color: #0f5132;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
+    body {
+        background: linear-gradient(120deg, #f6f8fa, #dbe6f2);
+        font-family: 'Arial', sans-serif;
+    }
+
+    .quiz-container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        padding: 40px;
+        text-align: center;
+    }
+
+    .quiz-title {
+        font-size: 2em;
+        color: #2c3e50;
+        margin-bottom: 20px;
+    }
+
+    .question-text {
+        font-size: 1.6em;
+        font-weight: bold;
+        margin-bottom: 30px;
+    }
+
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .option-label {
+        background: #3498db;
+        color: white;
+        font-size: 1.3em;
+        padding: 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+    }
+
+    .option-label input[type="radio"] {
+        margin-right: 20px;
+        transform: scale(1.5);
+    }
+
+    .option-label:hover {
+        background: #2980b9;
+        transform: scale(1.02);
+    }
+
+    .submit-button, .next-button {
+        padding: 15px 30px;
+        font-size: 1.2em;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .submit-button {
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+        margin-bottom: 15px;
+    }
+
+    .submit-button:hover {
+        background-color: #27ae60;
+    }
+
+    .next-button {
+        background-color: #e67e22;
+        color: white;
+        border: none;
+    }
+
+    .next-button:hover {
+        background-color: #d35400;
+    }
+
+    .status-message {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #e74c3c;
+    }
 </style>
 
-<h2>{{ $quizTitle }}</h2>
-<h3>Pytanie {{ $questionNumber }} z {{ $totalQuestions }}</h3>
+<div class="quiz-container">
+    <div class="quiz-title">{{ $quizTitle }}</div>
+    <div class="question-text">{{ $questionText }}</div>
 
-@if (session('status'))
-    <div class="status-message">
-        {{ session('status') }}
-    </div>
-@endif
+    @if (session('status'))
+        <div class="status-message">{{ session('status') }}</div>
+    @endif
 
-<p style="font-weight:bold; font-size:1.5em; margin:20px 0;">{{ $questionText }}</p>
+    <form action="{{ route('quizzes.submit', ['quizId' => $quizId, 'questionId' => $questionId]) }}" method="POST">
+        @csrf
+        <div class="options">
+            @foreach ($options as $key => $value)
+                <label class="option-label">
+                    <input type="radio" name="answer" value="{{ $key }}" required>
+                    {{ $key }}) {{ $value }}
+                </label>
+            @endforeach
+        </div>
 
-<form method="POST" action="{{ route('quizzes.submit', ['quizId' => $quizId, 'questionId' => $questionId]) }}">
-    @csrf
-    @foreach ($options as $key => $value)
-        <label class="option-label">
-            <input type="radio" name="answer" value="{{ $key }}" required>
-            {{ $key }}) {{ $value }}
-        </label>
-    @endforeach
+        <button type="submit" class="submit-button">Sprawdź Odpowiedź</button>
+    </form>
 
-    <div style="margin-top: 20px;">
-        <button type="submit" class="submit-button">Sprawdź odpowiedź</button>
-        @if($nextQuestionId)
-            <a href="{{ route('quizzes.question', ['quizId' => $quizId, 'questionId' => $nextQuestionId]) }}" class="next-button">Idź do następnego pytania</a>
-        @endif
-    </div>
-</form>
-
-<hr style="margin: 40px 0;">
-<p><a href="{{ route('quizzes.show', ['id' => $quizId]) }}">← Powrót do szczegółów Quizu</a></p>
+    @if($questionNumber < $totalQuestions)
+        <a href="{{ route('quizzes.question', [
+            'quizId' => $quizId,
+            'questionId' => $nextQuestionId ?? $questionId + 1,
+            'questionNumber' => $questionNumber + 1
+        ]) }}" class="next-button">Idź do następnego pytania</a>
+    @endif
+</div>
 @endsection
