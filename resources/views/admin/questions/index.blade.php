@@ -9,67 +9,66 @@
                 Pytania – quiz: {{ $quiz->title }}
             </h1>
 
-            {{-- Przycisk Dodaj pytanie zawsze widoczny --}}
-            <a href="{{ route('admin.quizzes.questions.create', $quiz) }}"
-               style="
-                   display: inline-block;
-                   background-color: #10B981;
-                   color: white;
-                   padding: 10px 20px;
-                   border-radius: 5px;
-                   font-weight: bold;
-                   text-decoration: none;
-                   margin-bottom: 1rem;
-               ">
-                + Dodaj pytanie
+            {{-- Powrót do listy quizów --}}
+            <a href="{{ route('admin.quizzes.index') }}"
+               class="bg-gray-600 text-white px-4 py-2 rounded font-bold mb-4 inline-block hover:bg-gray-700"
+               style="background-color: #4B5563; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-bottom: 15px; display: inline-block;">
+                ← Powrót do listy quizów
             </a>
 
-            @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    {{ session('success') }}
-                </div>
-            @endif
+            {{-- Dodaj pytanie --}}
+            <div class="mb-6">
+                <a href="{{ route('admin.quizzes.questions.create', $quiz) }}"
+                   class="bg-green-600 text-white px-4 py-2 rounded font-bold inline-block hover:bg-green-700"
+                   style="background-color: #16A34A; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    + Dodaj pytanie
+                </a>
+            </div>
 
             @if($questions->isEmpty())
                 <p class="text-gray-500 mt-4">
                     Ten quiz nie ma jeszcze żadnych pytań.
                 </p>
             @else
-                <div class="overflow-x-auto">
-                    <table class="w-full border">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="border p-2 text-left">Treść pytania</th>
-                                <th class="border p-2 text-center">Poprawna odpowiedź</th>
-                                <th class="border p-2 text-left">Akcje</th>
+                <table class="w-full border mt-4" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr class="bg-gray-100" style="background-color: #f3f4f6;">
+                            <th class="border p-2 text-left" style="border: 1px solid #e5e7eb; padding: 8px;">Treść</th>
+                            <th class="border p-2 text-center" style="border: 1px solid #e5e7eb; padding: 8px;">Poprawna</th>
+                            <th class="border p-2 text-center" style="border: 1px solid #e5e7eb; padding: 8px;">Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($questions as $question)
+                            <tr>
+                                <td class="border p-2" style="border: 1px solid #e5e7eb; padding: 8px;">{{ $question->text }}</td>
+                                <td class="border p-2 text-center font-bold" style="border: 1px solid #e5e7eb; padding: 8px; text-align: center;">{{ $question->correct_answer }}</td>
+                                <td class="border p-2" style="border: 1px solid #e5e7eb; padding: 8px;">
+                                    <div class="flex gap-2 justify-center" style="display: flex; gap: 10px; justify-content: center;">
+                                        
+                                        {{-- Edytuj (Niebieski) --}}
+                                        <a href="{{ route('admin.questions.edit', $question) }}"
+                                           class="px-4 py-2 font-bold rounded text-white bg-blue-600 hover:bg-blue-700"
+                                           style="background-color: #2563EB; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; display: inline-block;">
+                                           Edytuj
+                                        </a>
+
+                                        {{-- Usuń (Czerwony) --}}
+                                        <form method="POST" action="{{ route('admin.questions.destroy', $question) }}" onsubmit="return confirm('Czy na pewno usunąć?');" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" 
+                                                    class="px-4 py-2 font-bold rounded text-white bg-red-600 hover:bg-red-700"
+                                                    style="background-color: #DC2626; color: white; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;">
+                                                Usuń
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($questions as $question)
-                                <tr class="bg-white">
-                                    <td class="border p-2">{{ $question->text }}</td>
-                                    <td class="border p-2 text-center font-bold">{{ $question->correct_answer }}</td>
-                                    <td class="border p-2">
-                                        <div class="flex gap-4">
-                                            <a href="{{ route('admin.questions.edit', $question) }}"
-                                               class="text-blue-600 hover:text-blue-900 font-bold">
-                                                Edytuj
-                                            </a>
-                                            <form method="POST" action="{{ route('admin.questions.destroy', $question) }}"
-                                                  onsubmit="return confirm('Czy na pewno chcesz usunąć to pytanie?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 font-bold">
-                                                    Usuń
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
             @endif
 
         </div>
