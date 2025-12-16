@@ -29,12 +29,12 @@
 
             <!-- Page Content -->
             <main>
-                {{-- Sprawdzamy czy istnieje $slot (dla Dashboardu/Breeze) --}}
+                {{-- Sprawdza czy istnieje $slot (dla Dashboardu/Breeze) --}}
                 @if (isset($slot))
                     {{ $slot }}
                 @endif
 
-                {{-- Wyświetlamy treść dla Twoich quizów --}}
+                {{-- Wyświetla treść dla  quizów --}}
                 @yield('content')  
             </main>
         </div>

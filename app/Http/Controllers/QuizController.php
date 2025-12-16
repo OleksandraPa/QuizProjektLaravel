@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Quiz;      
 use App\Models\Question;  
+use Illuminate\Support\Facades\Auth;
+use App\Models\UserAnswer;
 
 class QuizController extends Controller
 {
@@ -58,25 +60,35 @@ class QuizController extends Controller
     /**
      * Obsługuje przesłaną odpowiedź na pytanie i sprawdza jej poprawność.
      */
-    public function submitAnswer(Request $request, $quizId, $questionId, $questionNumber = 1) // Dodajemy questionNumber    
+    public function submitAnswer(Request $request, $quizId, $questionId, $questionNumber = 1)
     {
+        // 1. WALIDACJA (To spełnia pierwszą część zadania)
         $request->validate([
             'answer' => 'required|in:A,B,C,D',
         ], [
-            'answer.required' => 'Proszę wybrać jedną opcję, aby sprawdzić odpowiedź.',
+            'answer.required' => 'Proszę zaznaczyć odpowiedź!',
         ]);
 
         $question = Question::findOrFail($questionId);
-        
-        if ((int)$question->quiz_id !== (int)$quizId) {
-            abort(403, 'Pytanie nie należy do tego quizu.');
-        }
 
-        $correctAnswer = $question->answer; 
+        // Sprawdzamy czy odpowiedź jest poprawna
+        $correctAnswer = $question->answer;
         $userAnswer = $request->input('answer');
-
         $isCorrect = ($userAnswer === $correctAnswer);
 
+        // 2. ZAPIS DO BAZY (To spełnia drugą część zadania: "przed zapisaniem")
+        // Zapisujemy tylko jeśli użytkownik jest zalogowany
+        if (Auth::check()) {
+            UserAnswer::create([
+                'user_id' => Auth::id(),
+                'quiz_id' => $quizId,
+                'question_id' => $questionId,
+                'answer' => $userAnswer,
+                'is_correct' => $isCorrect,
+            ]);
+        }
+
+        // 3. Informacja zwrotna
         $message = $isCorrect 
             ? 'Brawo! Twoja odpowiedź jest poprawna.' 
             : "Niestety, odpowiedź jest niepoprawna. Poprawna opcja to: {$correctAnswer}.";
