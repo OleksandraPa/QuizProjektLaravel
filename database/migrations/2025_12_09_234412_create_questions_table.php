@@ -13,12 +13,16 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            
             $table->foreignId('quiz_id')->constrained()->onDelete('cascade');
             
-            $table->text('text');
-            $table->json('options'); 
-            $table->char('answer', 1);
+            $table->text('text'); // <-- WAŻNE: 'text', nie 'content'
+            
+            $table->string('answer_a');
+            $table->string('answer_b');
+            $table->string('answer_c');
+            $table->string('answer_d');
+            $table->string('correct_answer');
+            
             $table->timestamps();
         });
     }

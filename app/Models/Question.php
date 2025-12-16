@@ -4,19 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Question extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['quiz_id', 'text', 'options', 'answer'];
-    
-    protected $casts = [
-        'options' => 'array',
+    // TU MUSI BYĆ 'text', A NIE 'content'
+    protected $fillable = [
+        'quiz_id', 
+        'text', 
+        'answer_a', 
+        'answer_b', 
+        'answer_c', 
+        'answer_d', 
+        'correct_answer'
     ];
 
-    public function quiz(): BelongsTo
+    public function quiz()
     {
         return $this->belongsTo(Quiz::class);
     }

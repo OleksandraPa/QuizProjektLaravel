@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Quiz;      
-use App\Models\Question;  
+use App\Models\Quiz;
+use App\Models\Question;
 use Illuminate\Support\Facades\Auth;
 use App\Models\UserAnswer;
 
@@ -16,7 +16,6 @@ class QuizController extends Controller
     public function index()
     {
         $quizzes = Quiz::all(); 
-
         return view('quizzes.index', ['quizzes' => $quizzes]);
     }
 
@@ -26,8 +25,7 @@ class QuizController extends Controller
     public function show($id)
     {
         $quiz = Quiz::findOrFail($id); 
-
-        $questions = $quiz->questions;
+        $questions = $quiz->questions()->orderBy('id')->get();
 
         return view('quizzes.show', [
             'quiz' => $quiz,
@@ -36,33 +34,48 @@ class QuizController extends Controller
     }
 
     /**
-     * pojedyncze pytanie z quizu
+     * Pojedyncze pytanie z quizu.
      */
-    public function question($quizId, $questionId, $questionNumber = 1)    {
-        $question = Question::where('quiz_id', $quizId)
-                            ->where('id', $questionId)
-                            ->firstOrFail(); 
-
+    public function question($quizId, $questionId)
+    {
         $quiz = Quiz::findOrFail($quizId);
+        $allQuestions = $quiz->questions()->orderBy('id')->get();
 
-        $totalQuestions = $quiz->questions()->count();
+        $question = $allQuestions->firstWhere('id', $questionId);
+        if (!$question) {
+            abort(404, "Nie znaleziono pytania.");
+        }
+
+        // Numer aktualnego pytania
+        $currentIndex = $allQuestions->search(fn($q) => $q->id == $questionId);
+        $questionNumber = $currentIndex + 1;
+
+        $nextQuestion = $allQuestions->get($currentIndex + 1);
+
+        $options = [
+            'A' => $question->answer_a,
+            'B' => $question->answer_b,
+            'C' => $question->answer_c,
+            'D' => $question->answer_d,
+        ];
+
         return view('quizzes.question', [
-            'quizTitle' => $quiz->title, 
-            'quizId' => $quizId,
-            'questionId' => $question->id, 
+            'quizTitle' => $quiz->title,
+            'quizId' => $quiz->id,
+            'questionId' => $question->id,
             'questionText' => $question->text,
-            'options' => $question->options, 
-            'totalQuestions' => $totalQuestions,
-            'questionNumber' => (int)$questionNumber 
+            'options' => $options,
+            'totalQuestions' => $allQuestions->count(),
+            'questionNumber' => $questionNumber,
+            'nextQuestionId' => $nextQuestion ? $nextQuestion->id : null,
         ]);
     }
-    
+
     /**
      * Obsługuje przesłaną odpowiedź na pytanie i sprawdza jej poprawność.
      */
-    public function submitAnswer(Request $request, $quizId, $questionId, $questionNumber = 1)
+    public function submitAnswer(Request $request, $quizId, $questionId)
     {
-        // 1. WALIDACJA (To spełnia pierwszą część zadania)
         $request->validate([
             'answer' => 'required|in:A,B,C,D',
         ], [
@@ -71,13 +84,10 @@ class QuizController extends Controller
 
         $question = Question::findOrFail($questionId);
 
-        // Sprawdzamy czy odpowiedź jest poprawna
-        $correctAnswer = $question->answer;
+        $correctAnswer = $question->correct_answer;
         $userAnswer = $request->input('answer');
         $isCorrect = ($userAnswer === $correctAnswer);
 
-        // 2. ZAPIS DO BAZY (To spełnia drugą część zadania: "przed zapisaniem")
-        // Zapisujemy tylko jeśli użytkownik jest zalogowany
         if (Auth::check()) {
             UserAnswer::create([
                 'user_id' => Auth::id(),
@@ -88,15 +98,14 @@ class QuizController extends Controller
             ]);
         }
 
-        // 3. Informacja zwrotna
         $message = $isCorrect 
             ? 'Brawo! Twoja odpowiedź jest poprawna.' 
             : "Niestety, odpowiedź jest niepoprawna. Poprawna opcja to: {$correctAnswer}.";
 
+        // Przekierowanie na to samo pytanie, by pokazać komunikat i przycisk następnego
         return redirect()->route('quizzes.question', [
             'quizId' => $quizId, 
-            'questionId' => $questionId,
-            'questionNumber' => $questionNumber
+            'questionId' => $questionId
         ])->with('status', $message);
     }
 }
